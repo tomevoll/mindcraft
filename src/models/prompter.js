@@ -81,13 +81,25 @@ export class Prompter {
                 embedding_model_profile = selectAPI(this.profile.embedding);
             } catch (e) {
                 embedding_model_profile = null;
+                console.warn(`Failed to select API for embedding model: ${e.message}. Profile: ${JSON.stringify(this.profile.embedding)}`);
             }
         }
+
         if (embedding_model_profile) {
-            this.embedding_model = createModel(embedding_model_profile);
+            try {
+                this.embedding_model = createModel(embedding_model_profile);
+            } catch (e) {
+                console.warn(`Failed to create embedding model from profile. Using word-overlap. Error: ${e.message}`);
+                this.embedding_model = createModel({api: 'no_embedding'});
+            }
         }
         else {
-            this.embedding_model = createModel({api: chat_model_profile.api});
+            try {
+                this.embedding_model = createModel({api: chat_model_profile.api});
+            } catch (e) {
+                console.warn(`Failed to create embedding model from chat API (${chat_model_profile.api}). Using word-overlap. Error: ${e.message}`);
+                this.embedding_model = createModel({api: 'no_embedding'});
+            }
         }
 
         this.skill_libary = new SkillLibrary(agent, this.embedding_model);

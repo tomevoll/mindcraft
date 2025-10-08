@@ -35,18 +35,18 @@ export function selectAPI(profile) {
         profile = {model: profile};
     }
     // backwards compatibility with local->ollama
-    if (profile.api?.includes('local') || profile.model?.includes('local')) {
+    if (profile.api?.includes('local') || (typeof profile.model === 'string' && profile.model.includes('local'))) {
         profile.api = 'ollama';
-        if (profile.model) {
+        if (typeof profile.model === 'string') {
             profile.model = profile.model.replace('local', 'ollama');
         }
     }
     if (!profile.api) {
-        const api = Object.keys(apiMap).find(key => profile.model?.startsWith(key));
+        const api = Object.keys(apiMap).find(key => typeof profile.model === 'string' && profile.model.startsWith(key));
         if (api) {
             profile.api = api;
         }
-        else {
+        else if (typeof profile.model === 'string') {
             // check for some common models that do not require prefixes
             if (profile.model.includes('gpt') || profile.model.includes('o1')|| profile.model.includes('o3'))
                 profile.api = 'openai';
@@ -70,8 +70,10 @@ export function selectAPI(profile) {
     if (!apiMap[profile.api]) {
         throw new Error('Unknown api:', profile.api);
     }
-    let model_name = profile.model.replace(profile.api + '/', ''); // remove prefix
-    profile.model = model_name === "" ? null : model_name; // if model is empty, set to null
+    if (typeof profile.model === 'string') {
+        let model_name = profile.model.replace(profile.api + '/', ''); // remove prefix
+        profile.model = model_name === "" ? null : model_name; // if model is empty, set to null
+    }
     return profile;
 }
 
